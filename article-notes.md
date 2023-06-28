@@ -16,7 +16,11 @@ Once created, these embeddings can be used with vector arithmetic that encodes m
 
 
 
->"[Le and Mikolov (2014)](https://arxiv.org/abs/1405.4053) extend this word2vec method to learn representations of documents. For predictions of target words, a vector unique to the document is concatenated with context word vectors and subsequently updated. Similarly, we embed institutions and their words into a shared vector space by averaging a vector unique to an institution with context word vectors when predicting that institution’s words and, with back-propagation and stochastic gradient descent, update representations for institutions and the words (which are shared across all institutions). (Note: We use a binary Huffman tree ([Mikolov et al. 2013b](https://papers.nips.cc/paper_files/paper/2013/hash/9aa42b31882ec039965f3c4923ce901b-Abstract.html)) for efficient hierarchical softmax prediction of words, and conduct 25 epochs while linearly decreasing the learning rate from 0.025 to 0.001.)"
+>"[Le and Mikolov (2014)](https://arxiv.org/abs/1405.4053) extend this word2vec method to learn representations of documents. For predictions of target words, a vector unique to the document is concatenated with context word vectors and subsequently updated. Similarly, we embed institutions and their words into a shared vector space by averaging a vector unique to an institution with context word vectors when predicting that institution’s words and, with back-propagation and stochastic gradient descent, update representations for institutions and the words (which are shared across all institutions).Note: We use a binary Huffman tree ([Mikolov et al. 2013b](https://papers.nips.cc/paper_files/paper/2013/hash/9aa42b31882ec039965f3c4923ce901b-Abstract.html)) for efficient hierarchical softmax prediction of words, and conduct 25 epochs while linearly decreasing the learning rate from 0.025 to 0.001."
+
+> "We use a tree of Parzen estimators search algorithm (Bergstra et al. 2013) to sample from parameter space and save all models estimated. (Note: vector dimensionality, uniform(100, 200), and maximum distance between the context and target words, uniform(10, 25))" 
+
+They sampled models with different hyper-parameters: the dimension of the embedding layer, and the context window measured from each side of the target word.
 
 > "During training, we alternate between updating GovVecs based on their use in the prediction of words in their policy corpus and their use in the prediction of other word sources located nearby in time."
 
@@ -45,3 +49,8 @@ Unique corpus of:
     * and Proclamations (7,544) from the [American Presidency Project website](https://www.presidency.ucsb.edu/).
 * 42 years of official summaries of all bills introduced in the U.S. Congress (1973-2014)
     * The Sunlight Foundation downloaded [official bill summaries](https://github.com/unitedstates/congress/wiki) from the U.S. Government Publishing Office (GPO), which we downloaded.
+
+>"We removed HTML artifacts, whitespace, [stop words](http://jmlr.csail.mit.edu/papers/volume5/lewis04a/a11-smart-stop-list/english.stop), words occurring only once, numbers, and punctuation, and converted to lower-case."
+
+## Results
+

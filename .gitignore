@@ -1,3 +1,6 @@
+# Data file for information collected online
+data/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
