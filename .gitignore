@@ -9,6 +9,8 @@ data/raw-data/
 model.pt
 
 */.DS_store
+.DS_store
+.gitignore
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
