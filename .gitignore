@@ -1,5 +1,14 @@
 # Data file for information collected online
 data/
+data/clean-data/
+data/govtext/window*
+data/input/
+data/raw-data/
+
+# Model
+model.pt
+
+*/.DS_store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
