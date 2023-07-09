@@ -22,13 +22,13 @@ import model as _model
 
 parser = argparse.ArgumentParser(description='PyTorch Policy Gov2Vec Embeddings Model')
 
-parser.add_argument('--data', type=str, default='./data/govtext', # need to update this
+parser.add_argument('--data', type=str, default='./data/govtext',
                     help='location of the data corpus')
 parser.add_argument('--window', type=int, default=10,
                     help='context window length from both sizes of the target word')
-parser.add_argument('--arch-context', type=str, default='AVG',
+parser.add_argument('--arch-context', type=str, default='AVG',  metavar='CONTEXT',
                     help='architecture of context combination (AVG, SUM, CONCAT)')
-parser.add_argument('--arch-gov', type=str, default='SUM',
+parser.add_argument('--arch-gov', type=str, default='AVG',  metavar='GOV',
                     help='architecture of government combination (AVG, SUM, CONCAT)')
 parser.add_argument('--emsize', type=int, default=100,
                     help='size of word and gov embeddings')
@@ -80,7 +80,7 @@ else:
 ###############################################################################
 
 if f'window{args.window}' not in os.listdir(args.data):
-    data.create_train_val(args.data, args.window)
+    data.create_train_val(args.data, args.window, 1_000)
 
 train_data, val_data = data.get_train_val(args.data, args.window)
 
@@ -138,15 +138,13 @@ def train(train_loader):
         loss = model.criterion(output, target_batch)
         loss.backward()
 
+        # Optimizer AdamW implementation to actively change learning rate should be considered
         for p in model.parameters():
             p.data.add_(p.grad, alpha=-lr)
 
         total_loss += loss.item()
 
         if batch % args.log_interval == 0 and batch > 0:
-            if prev_loss < total_loss:
-                print("Stagnant loss: Breaking from current epoch")
-                break
             curr_loss = total_loss / args.log_interval
             elapsed = time.time() - start_time
             print('| epoch {:3d} | {:5d}/{:5d} batches | lr {:02.2f} | ms/batch {:5.2f} | '
@@ -185,7 +183,8 @@ try:
                                            val_loss, math.exp(val_loss)))
         print('-' * 89)
         # Save the model if the validation loss is the best we've seen so far.
-        if not best_val_loss or val_loss < best_val_loss:
+        LOSS_TOL = 0.05  # tolerance for validation loss improvement
+        if not best_val_loss or (best_val_loss - val_loss > LOSS_TOL):
             with open(args.save, 'wb') as f:
                 torch.save(model, f)
             best_val_loss = val_loss
