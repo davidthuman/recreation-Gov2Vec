@@ -5,6 +5,7 @@ import torch
 import os
 
 import data
+import util
 
 ###############################################################################
 # Parse command inputs
@@ -19,15 +20,15 @@ parser.add_argument('--checkpoint', type=str, default='./model.pt',
 parser.add_argument('--outf', type=str, default='./terms.txt',
                     help='output file for terms')
 parser.add_argument('--query', type=str,
-                    help='query to ask model, format -> "(word|gov) [(+|-) (word|gov)]*"')
+                    help='query to ask model, format": "(word|gov) [(+|-) (word|gov)]*"')
+parser.add_argument('--top', type=int, default=5,
+                    help='number of similar to gather')
 parser.add_argument('--seed', type=int, default=1111,
                     help='random seed')
 parser.add_argument('--cuda', action='store_true', default=False,
                     help='use CUDA')
 parser.add_argument('--mps', action='store_true', default=False,
                         help='enables macOS GPU training')
-parser.add_argument('--log-interval', type=int, default=200, metavar='N',
-                    help='report interval')
 
 args = parser.parse_args()
 
@@ -70,3 +71,22 @@ gov_vocab = data.Vocab.load(os.path.join(args.data, 'govs.csv'))
 # Process query
 ###############################################################################
 
+query = util.Query(word_vocab, gov_vocab, model.word_embedding, model.gov_embedding, device)
+query.set_query(args.query)
+
+words = query.get_words(args.top)
+govs = query.get_govs(args.top)
+
+with open(args.outf, 'w') as f:
+    
+    f.write(f"Query: {args.query}\n")
+    f.write('\n')
+    f.write(f"Top {args.top} Words\n")
+    f.write(('-' * 89) + '\n')
+    for word, score in words:
+        f.write(f"\t{word}: {score}\n")
+    f.write('\n')
+    f.write(f"Top {args.top} Institutions\n")
+    f.write(('-' * 89) + '\n')
+    for gov, score in govs:
+        f.write(f"\t{gov}: {score}\n")

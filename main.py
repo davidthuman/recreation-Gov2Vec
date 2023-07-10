@@ -15,6 +15,7 @@ import torch.optim as optim
 
 import data
 import model as _model
+import util
 
 ###############################################################################
 # Parse command inputs
@@ -50,6 +51,8 @@ parser.add_argument('--save', type=str, default='model.pt',
                     help='path to save the final model')
 parser.add_argument('--onnx-export', type=str, default='',
                     help='path to export the final model in onnx format')
+parser.add_argument('--test-run', action='store_true',
+                    help='run testing on the current model')
 parser.add_argument('--dry-run', action='store_true',
                     help='verify the code and the model')
 
@@ -171,38 +174,76 @@ def export_onnx(path, batch_size, window_len):
 lr = args.lr
 best_val_loss = None
 
-# At any point you can hit Ctrl + C to break out of the training early.
-try:
-    for epoch in range(1, args.epochs + 1):
-        epoch_start_time = time.time()
-        train(train_loader=train_loader)
-        val_loss = evaluate(val_loader=val_loader)
+if not args.test_run:
+    # At any point you can hit Ctrl + C to break out of the training early.
+    try:
+        for epoch in range(1, args.epochs + 1):
+            epoch_start_time = time.time()
+            train(train_loader=train_loader)
+            val_loss = evaluate(val_loader=val_loader)
+            print('-' * 89)
+            print('| end of epoch {:3d} | time: {:5.2f}s | valid loss {:5.2f} | '
+                    'valid ppl {:8.2f}'.format(epoch, (time.time() - epoch_start_time),
+                                            val_loss, math.exp(val_loss)))
+            print('-' * 89)
+            # Save the model if the validation loss is the best we've seen so far.
+            LOSS_TOL = 0.05  # tolerance for validation loss improvement
+            if not best_val_loss or (best_val_loss - val_loss > LOSS_TOL):
+                with open(args.save, 'wb') as f:
+                    torch.save(model, f)
+                best_val_loss = val_loss
+            else:
+                # Anneal the learning rate if no improvement has been seen in the validation dataset.
+                lr /= 4.0
+    except KeyboardInterrupt:
         print('-' * 89)
-        print('| end of epoch {:3d} | time: {:5.2f}s | valid loss {:5.2f} | '
-                'valid ppl {:8.2f}'.format(epoch, (time.time() - epoch_start_time),
-                                           val_loss, math.exp(val_loss)))
-        print('-' * 89)
-        # Save the model if the validation loss is the best we've seen so far.
-        LOSS_TOL = 0.05  # tolerance for validation loss improvement
-        if not best_val_loss or (best_val_loss - val_loss > LOSS_TOL):
-            with open(args.save, 'wb') as f:
-                torch.save(model, f)
-            best_val_loss = val_loss
-        else:
-            # Anneal the learning rate if no improvement has been seen in the validation dataset.
-            lr /= 4.0
-except KeyboardInterrupt:
-    print('-' * 89)
-    print('Exiting from training early')
+        print('Exiting from training early')
 
 # Load the best saved model.
 with open(args.save, 'rb') as f:
     model = torch.load(f)
 
-# Run on test data.
-
-
-
 if len(args.onnx_export) > 0:
     # Export the model in ONNX format.
     export_onnx(args.onnx_export, batch_size=1, window_len=args.window)
+
+###############################################################################
+# Test queries
+###############################################################################
+
+test_queries = {
+    "Branch 1": "candidate + elected + campaign",
+    "Branch 2": "long + term + government + career",
+    "Branch 3": "rule + precedent + interpret",
+    "Branch 4": "validity + truth",
+    "Branch 5": "statistics + science + data - story - anecdote",
+    "Branch 6": "order + direct - contemplate - consider",
+    "113th House Economic": "climate + emissions + House 113th - Barack Obama + economy - environment",
+    "113th House Environmental": "climate + emissions + House 113th - Barack Obama - economy + environment",
+    "Obama Economic": "climate + emissions - House 113th + Barack Obama + economy - environment",
+    "Obama Environmental": "climate + emissions - House 113th + Barack Obama - economy + environment",
+    "106th House Oil": "war + House 106th - House 107th + oil - terrorism",
+    "106th House Terrorism": "war + House 106th - House 107th - oil + terrorism",
+    "107th House Oil": "war - House 106th + House 107th + oil - terrorism",
+    "107th House Terrorism": "war - House 106th + House 107th - oil + terrorism",
+}
+
+query_processer = util.Query(word_vocab, gov_vocab, model.word_embedding, model.gov_embedding, device)
+
+for title, query in test_queries.items():
+
+    query_processer.set_query(query)
+    words = query_processer.get_words()
+    govs = query_processer.get_govs()
+
+    print(f"{title}: {query}")
+    print()
+    print(f"Top 5 Words")
+    print('-' * 89)
+    for word, score in words:
+        print(f"\t{word}: {score}")
+    print(f"Top 5 Institutions")
+    print('-' * 89)
+    for gov, score in govs:
+        print(f"\t{gov}: {score}")
+
