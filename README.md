@@ -6,16 +6,9 @@ The model uses a Continuous-Bag-of-Words, along with the government institution 
 
 ## To Dos
 
-- Improve data pre-processing
-  - All of the raw data needed to train this model had already been collected from the internet and saved. Pre-processing has been been acomplished, detailed in `docs/article-notes.md`, however, more improvements are necessary.
-  - Adding functionality for a user to specify details of the pre-processing would be ideal.
-  - Need to remove lower frequency words
-  - Need to remove stop words (outputing semantically correct sentences is not the goal)
-  - Need to remove non-words (some text cleaning technique processes broke text)
-  - Think about using a pre-trained word embedding and fine-tune that during training
-  - Implement a better tokenizer or find a good implementation
 - Implement Hiearchical Softmax with Huffman Encoding
-- Implement `init_weights` for model
+- Implement weights for loss function
+  - Does not give good results
 
 The embeddings of the trained model can then be used to interpret queries using vector arithmetic.
 
@@ -29,6 +22,19 @@ python query.py --query "validity + truth"  # Query the top 5 similar words and 
 
 ## Usage
 
+To initialized the vocabulary and data you can use `data.py`. This script will create a `words.csv`, `govs.csv`, and `institution.csv` files within the `./data/govtest` directory (or the data directory that is passed). The script will use the `./data/clean-data/institution_corpora.csv` file to create the vocab indices and training samples.
+
+The `data.py` script accepts the following:
+
+```bash
+options:
+  -h, --help         show this help message and exit
+  --data DATA        location to save initialized data
+  --window WINDOW    context window length from both sizes of the target word
+  --samples SAMPLES  number of samples collected for training
+  --freq-cutoff FC   frequency cutoff for words to be added to the vocab
+```
+
 During training, if a keyboard iterrupt (Ctrl-C) is received, training is stopped and the current model is evaluated against the testing queries.
 
 The `main.py` script accepts the following:
@@ -38,13 +44,14 @@ options:
   -h, --help            show this help message and exit
   --data DATA           location of the data corpus
   --window WINDOW       context window length from both sizes of the target word
+  --samples SAMPLES     number of samples collected for training
   --arch-context CONTEXT
                         architecture of context combination (AVG, SUM, CONCAT)
   --arch-gov GOV        architecture of government combination (AVG, SUM, CONCAT)
   --emsize EMSIZE       size of word and gov embeddings
   --lr LR               initial learning rate
   --epochs EPOCHS       upper epoch limit
-  --batch_size N        batch size
+  --batch-size N        batch size
   --seed SEED           random seed
   --cuda                use CUDA
   --mps                 enables macOS GPU training

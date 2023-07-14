@@ -2,11 +2,12 @@
 
 import torch
 import torch.nn as nn
+import math
 
 # Define architecture functions
 def context_avg(x): return torch.mean(x, dim=1)
 def context_sum(x): return torch.sum(x, dim=1)
-def context_cat(x): return x
+def context_cat(x): return torch.reshape(x, (x.size(dim=0), x.size(dim=1) * x.size(dim=2)))
 def combine_avg(x, y): return torch.mean(torch.stack((x, y), dim=2), dim=2)
 def combine_sum(x, y): return x + y
 def combine_cat(x, y): return torch.cat((x, y), dim=1)
@@ -14,7 +15,7 @@ def combine_cat(x, y): return torch.cat((x, y), dim=1)
 class Gov2Vec_Model(nn.Module):
     """ Gov2Vec Model
     """
-    def __init__(self, arch_context, arch_gov, vocab_size, gov_size, embed_dim, window_size):
+    def __init__(self, arch_context, arch_gov, vocab_size, gov_size, embed_dim, window_size, loss_weights):
         """ Initializes Gov2Vec Model
         
         :param arch_context: combination architecture for context
@@ -34,7 +35,8 @@ class Gov2Vec_Model(nn.Module):
         super(Gov2Vec_Model, self).__init__()
         # Weights should be given to CrossEntropyLoss that incorporate the frequency of words
         # in the dataset. Weights for the minority classes (words) should be higher.
-        self.criterion = nn.CrossEntropyLoss()
+        self.criterion = nn.NLLLoss()
+        self.logsoftmax = nn.LogSoftmax(dim=1)
 
         self.vocab_size = vocab_size
         self.gov_size = gov_size
@@ -58,7 +60,7 @@ class Gov2Vec_Model(nn.Module):
                                      options for when 'CONCAT' is supplied to `--arch-context` 
                                      are only 'CONCAT'""")
                 self.combine_context = context_cat
-                context_size = window_size * embed_dim
+                context_size = 2 * window_size * embed_dim
             case _:
                 raise ValueError("""An invalid option for `--arch-context` was supplied,
                                 options are ['AVG', 'SUM', or 'CONCAT']""")
@@ -86,8 +88,17 @@ class Gov2Vec_Model(nn.Module):
             out_features=vocab_size
         )
 
+        self.init_weights()
+
     def init_weights(self):
-        pass
+        # https://stackoverflow.com/questions/49433936/how-do-i-initialize-weights-in-pytorch
+        # Need to init weights for both 
+        y_gov = 1 / math.sqrt(self.gov_size)
+        nn.init.uniform_(self.gov_embedding.weight, -y_gov, y_gov)
+        y_word = 1 / math.sqrt(self.vocab_size)
+        nn.init.uniform_(self.word_embedding.weight, -y_word, y_word)
+        nn.init.zeros_(self.linear.bias)
+        nn.init.uniform_(self.linear.weight, -0.1, 0.1)
 
     def forward(self, context, gov):
         """ Forward pass to model of target word context and government
@@ -105,5 +116,6 @@ class Gov2Vec_Model(nn.Module):
         context_embedding = self.combine_context(context_embedding)
         combined = self.combine(gov_embedding, context_embedding)
         out = self.linear(combined)
+        likely = self.logsoftmax(out)
 
-        return out
+        return likely

@@ -11,7 +11,7 @@ import util
 # Parse command inputs
 ###############################################################################
 
-parser = argparse.ArgumentParser(description='PyTorch Policy Gov2Vec Embeddings Model')
+parser = argparse.ArgumentParser(description='PyTorch Policy Gov2Vec Embeddings Model - Query Input')
 
 parser.add_argument('--data', type=str, default='./data/govtext',
                     help='location of the data corpus')

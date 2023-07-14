@@ -13,7 +13,6 @@ import torch.nn as nn
 import torch.onnx
 import torch.optim as optim
 
-import data
 import model as _model
 import util
 
@@ -21,12 +20,14 @@ import util
 # Parse command inputs
 ###############################################################################
 
-parser = argparse.ArgumentParser(description='PyTorch Policy Gov2Vec Embeddings Model')
+parser = argparse.ArgumentParser(description='PyTorch Policy Gov2Vec Embeddings Model - Training and Testing')
 
 parser.add_argument('--data', type=str, default='./data/govtext',
                     help='location of the data corpus')
 parser.add_argument('--window', type=int, default=10,
                     help='context window length from both sizes of the target word')
+parser.add_argument('--samples', type=int, default=50_000,
+                    help='number of samples collected for training')
 parser.add_argument('--arch-context', type=str, default='AVG',  metavar='CONTEXT',
                     help='architecture of context combination (AVG, SUM, CONCAT)')
 parser.add_argument('--arch-gov', type=str, default='AVG',  metavar='GOV',
@@ -37,7 +38,7 @@ parser.add_argument('--lr', type=float, default=0.1,
                     help='initial learning rate')
 parser.add_argument('--epochs', type=int, default=25,
                     help='upper epoch limit')
-parser.add_argument('--batch_size', type=int, default=32, metavar='N',
+parser.add_argument('--batch-size', type=int, default=32, metavar='N',
                     help='batch size')
 parser.add_argument('--seed', type=int, default=1111,
                     help='random seed')
@@ -82,20 +83,29 @@ else:
 # Load data
 ###############################################################################
 
-if f'window{args.window}' not in os.listdir(args.data):
-    data.create_train_val(args.data, args.window, 1_000)
+# Check if the specified data has been created
+if f'window{args.window}-samples{args.samples}' not in os.listdir(args.data):
+    util.create_train_val(args.data, args.window, args.samples)
 
-train_data, val_data = data.get_train_val(args.data, args.window)
+# Create training and validation sets
+train_data, val_data = util.get_train_val(args.data, args.window, args.samples)
 
-word_vocab = data.Vocab.load(os.path.join(args.data, 'words.csv'))
-gov_vocab = data.Vocab.load(os.path.join(args.data, 'govs.csv'))
+# Load in Vocab
+word_vocab = util.Vocab.load(os.path.join(args.data, 'words.csv'))
+gov_vocab = util.Vocab.load(os.path.join(args.data, 'govs.csv'))
 
-train_loader = data.data_loaders(train_data, args.batch_size, True, device)
-val_loader = data.data_loaders(val_data, args.batch_size, True, device)
+# Create training and validation loaders
+train_loader = util.data_loaders(train_data, args.batch_size, True, device)
+val_loader = util.data_loaders(val_data, args.batch_size, True, device)
 
 ###############################################################################
 # Build the model
 ###############################################################################
+
+loss_weights = torch.tensor(
+    util.get_freq(train_data['target_tokens'], len(word_vocab)),
+    device=device
+)
 
 model = _model.Gov2Vec_Model(
     arch_context=args.arch_context,
@@ -104,6 +114,7 @@ model = _model.Gov2Vec_Model(
     gov_size=len(gov_vocab),
     embed_dim=args.emsize,
     window_size=args.window,
+    loss_weights=loss_weights
 ).to(device)
 
 ###############################################################################
