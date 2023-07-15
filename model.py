@@ -91,8 +91,8 @@ class Gov2Vec_Model(nn.Module):
         self.init_weights()
 
     def init_weights(self):
-        # https://stackoverflow.com/questions/49433936/how-do-i-initialize-weights-in-pytorch
-        # Need to init weights for both 
+        """ Initialize model weights
+        """
         y_gov = 1 / math.sqrt(self.gov_size)
         nn.init.uniform_(self.gov_embedding.weight, -y_gov, y_gov)
         y_word = 1 / math.sqrt(self.vocab_size)
@@ -107,14 +107,18 @@ class Gov2Vec_Model(nn.Module):
         :type context: torch.Tensor
         :param gov: government institution
         :type gov: torch.Tensor
-        :returns: model's guess of the target word
+        :returns: probability distribution over words
         :rtype: torch.Tensor
         """
+        # Calculate embeddings
         context_embedding = self.word_embedding(context)
         gov_embedding = self.gov_embedding(gov)
 
+        # Combine embeddings
         context_embedding = self.combine_context(context_embedding)
         combined = self.combine(gov_embedding, context_embedding)
+
+        # Out layer and LogSoftmax
         out = self.linear(combined)
         likely = self.logsoftmax(out)
 

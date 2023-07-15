@@ -294,7 +294,8 @@ def create_train_val(data, window_size, samples=50_000):
         write.writerows([[context_tokens[i], gov_tokens[i], target_tokens[i]] for i in val_range])
 
 def get_train_val(data, window_size, samples):
-
+    """ 
+    """
     train_data = dict()
     train_data["context_tokens"] = []
     train_data["gov_tokens"] = []
@@ -322,6 +323,8 @@ def get_train_val(data, window_size, samples):
     return train_data, val_data
 
 def get_freq(target_tokens, vocab_size):
+    """ 
+    """
     freqs = [1] * vocab_size
     total = len(target_tokens)
     for token in target_tokens:
@@ -336,6 +339,8 @@ class Query():
     """ 
     """
     def __init__(self, word_vocab, gov_vocab, word_embed, gov_embed, device):
+        """ 
+        """
         # Set Vocabs
         self.word_vocab = word_vocab
         self.gov_vocab = gov_vocab
@@ -412,6 +417,8 @@ class Query():
         self.query_vec = sum(processed_query)
 
     def get_words(self, top=5):
+        """ 
+        """
         cos = torch.nn.CosineSimilarity(dim=0)
         rankings = []
         for word, id in tqdm.tqdm(self.word_vocab.word2id.items()):
@@ -425,6 +432,8 @@ class Query():
         return rankings[:top]
 
     def get_govs(self, top=5):
+        """ 
+        """
         cos = torch.nn.CosineSimilarity(dim=0)
         rankings = []
         for gov, id in self.gov_vocab.word2id.items():

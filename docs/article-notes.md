@@ -84,42 +84,15 @@ Because the embedding dimensions for institutions and words are the same, instit
 
 This vector query is defined as ('climate' + 'emissions' + 'Obama' − 'House113' + 'economy' − 'environment').
 
-### Hierachical Softmax
-
-[Article](https://papers.nips.cc/paper_files/paper/2013/file/9aa42b31882ec039965f3c4923ce901b-Paper.pdf) cited when mentioning of Hierarchical Softmax
-
-[PyTorch Discussion post](https://discuss.pytorch.org/t/feedback-on-manually-implemented-hierarchical-softmax/82478)
-
-[Two Layer Hierarchical Softmax PyTorch](https://github.com/leimao/Two-Layer-Hierarchical-Softmax-PyTorch/tree/master) with associated article [post](https://leimao.github.io/article/Hierarchical-Softmax/).
-
-Another GitHub [implementation](https://github.com/rbturnbull/hierarchicalsoftmax)
-
 ### Formatting and Culture
 
 This [Word Language Model](https://github.com/pytorch/examples/tree/main/word_language_model) example from PyTorch, along with their whole folder of examples (I learned PyTorch through an NLP course at my univerity), provide a format pattern for 
 
 Good practices when writing with PyTorch functionality
 
-Here is a list of possible running parameters that could be in this model
-
-* `--data`: path to data
-* `--model`: structured vs. text-only
-* `--emsize`: size of word embedding
-* `--lr`: initial learning rate
-* `--epochs`: upper epoch limit
-* `--batch_size`: batch size
-* `--seed`: random seed
-* `--mpa`: enables macOS GPU training
-* `--log-interval`: report interval
-* `--save`: path to save the final model
-* `--onnx-export`: path to export the final model in onnx format
-* `--dry-run`: verify the code and the model
-
-
 ### Related Article
 
 [Topic2Vec](https://www.semanticscholar.org/paper/Topic2Vec%3A-Learning-distributed-representations-of-Niu-Dai/768b130d70911178c6b5b0dbaf8ccb19d899ac42)
 
-[Doc2Sent2Vec: A Novel Two-Phase Approach for Learning Document Representation]
 
 [Doc2Sent2Vec: A Novel Two-Phase Approach for Learning Document Representation](https://arxiv.org/pdf/1805.10685.pdf)

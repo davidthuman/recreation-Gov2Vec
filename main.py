@@ -172,10 +172,21 @@ def train(train_loader):
             break
 
 def export_onnx(path, batch_size, window_len):
+    """ Create and save an ONNX files for the model
+
+    :param path: path to save the files
+    :type path: str
+    :param batch_size:
+    :type batch_size: int
+    :param window_len: 
+    :type window_len: int
+    """
     print('The model is also exported in ONNX format at {}.'.format(os.path.realpath(args.onnx_export)))
     model.eval()
-    context = torch.LongTensor(window_len * batch_size).zero_().view(-1, batch_size).to(device)
-    gov = torch.LongTensor(batch_size).zero_().view(-1, batch_size).to(device)
+    for (context, gov, tagret) in val_loader:
+        break
+    context = context[[0],:]
+    gov = gov[[0]]
     torch.onnx.export(model, (context, gov), path)
 
 ###############################################################################
@@ -216,7 +227,7 @@ with open(args.save, 'rb') as f:
 
 if len(args.onnx_export) > 0:
     # Export the model in ONNX format.
-    export_onnx(args.onnx_export, batch_size=1, window_len=args.window)
+    export_onnx(args.onnx_export, batch_size=2, window_len=args.window)
 
 ###############################################################################
 # Test queries
@@ -243,7 +254,12 @@ query_processer = util.Query(word_vocab, gov_vocab, model.word_embedding, model.
 
 for title, query in test_queries.items():
 
-    query_processer.set_query(query)
+    try:
+        query_processer.set_query(query)
+    except ValueError:
+        print(str(ValueError))
+        continue
+
     words = query_processer.get_words()
     govs = query_processer.get_govs()
 
